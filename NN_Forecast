@@ -1,0 +1,75 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+# 1. Зареждане на CSV файла
+availabilities_df = pd.read_csv("availabilities.csv")
+
+# 2. Преобразуване на колоните
+availabilities_df["date"] = pd.to_datetime(availabilities_df["date"], format="%m/%d/%y")
+availabilities_df["available"] = availabilities_df["available"].map({"t": 1, "f": 0})
+availabilities_df["price"] = availabilities_df["price"].replace(r"[\$,]", "", regex=True).astype(float)
+
+# 3. Избор на входни и целева променлива
+X = availabilities_df[["minimum_nights", "maximum_nights", "available"]]
+y = availabilities_df["price"]
+
+# 4. Разделяне на данните на обучаващи и тестови
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 5. Създаване и обучение на линейния модел
+lr_model = LinearRegression()
+lr_model.fit(X_train, y_train)
+
+# 6. Предсказване и оценка на линейния модел
+y_pred_lr = lr_model.predict(X_test)
+mae_lr = mean_absolute_error(y_test, y_pred_lr)
+mse_lr = mean_squared_error(y_test, y_pred_lr)
+rmse_lr = mse_lr ** 0.5
+
+print("Линейна регресия:")
+print(f"Средна абсолютна грешка (MAE): {mae_lr}")
+print(f"Средна квадратична грешка (MSE): {mse_lr}")
+print(f"Коренна средна квадратична грешка (RMSE): {rmse_lr}")
+
+# 7. Създаване и обучение на Random Forest модел (с увеличен брой дървета)
+rf_model = RandomForestRegressor(n_estimators=200, random_state=42)  # Увеличаваме броя на дърветата до 200
+rf_model.fit(X_train, y_train)
+
+# 8. Предсказване и оценка на Random Forest модел
+y_pred_rf = rf_model.predict(X_test)
+mae_rf = mean_absolute_error(y_test, y_pred_rf)
+mse_rf = mean_squared_error(y_test, y_pred_rf)
+rmse_rf = mse_rf ** 0.5
+
+print("\nRandom Forest:")
+print(f"Средна абсолютна грешка (MAE): {mae_rf}")
+print(f"Средна квадратична грешка (MSE): {mse_rf}")
+print(f"Коренна средна квадратична грешка (RMSE): {rmse_rf}")
+
+# 9. Създаване и обучение на Gradient Boosting модел (с увеличен брой итерации)
+gb_model = GradientBoostingRegressor(n_estimators=200, random_state=42)  # Увеличаваме броя на итерациите до 200
+gb_model.fit(X_train, y_train)
+
+# 10. Предсказване и оценка на Gradient Boosting модел
+y_pred_gb = gb_model.predict(X_test)
+mae_gb = mean_absolute_error(y_test, y_pred_gb)
+mse_gb = mean_squared_error(y_test, y_pred_gb)
+rmse_gb = mse_gb ** 0.5
+
+print("\nGradient Boosting:")
+print(f"Средна абсолютна грешка (MAE): {mae_gb}")
+print(f"Средна квадратична грешка (MSE): {mse_gb}")
+print(f"Коренна средна квадратична грешка (RMSE): {rmse_gb}")
+
+# 11. Предсказване за нови стойности с Random Forest
+new_data = pd.DataFrame({"minimum_nights": [3], "maximum_nights": [30], "available": [1]})
+predicted_price_rf = rf_model.predict(new_data)
+
+# 12. Предсказване за нови стойности с Gradient Boosting
+predicted_price_gb = gb_model.predict(new_data)
+
+print(f"\nПредсказана цена с Random Forest: ${predicted_price_rf[0]:.2f}")
+print(f"Предсказана цена с Gradient Boosting: ${predicted_price_gb[0]:.2f}")
